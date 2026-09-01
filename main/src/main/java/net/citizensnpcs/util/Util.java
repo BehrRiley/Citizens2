@@ -450,6 +450,15 @@ public class Util {
         return name.replaceFirst(Pattern.quote(BEDROCK_NAME_PREFIX), "");
     }
 
+    public static String stripFormatting(String text) {
+        if (text == null) return "";
+        return Messaging.stripColor(text)
+                .replaceAll("<[^>]*>", "")
+                .replaceAll("(?i)&[0-9a-fk-or]", "")
+                .replaceAll("(?i)§[0-9a-fk-or]", "")
+                .replaceAll("(?i)&x(&[0-9a-fA-F]){6}", "");
+    }
+
     private static String BEDROCK_NAME_PREFIX = ".";
     private static final Random RANDOM = new XORShiftRNG();
     private static boolean SUPPORTS_BUKKIT_GETENTITY = true;

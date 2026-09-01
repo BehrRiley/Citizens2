@@ -889,9 +889,12 @@ public class NPCCommands {
                 throw new CommandException(Messaging.tr(Messages.NPC_CREATE_MISSING_MOBTYPE, args.getFlag("type")));
         }
         int nameLength = SpigotUtil.getMaxNameLength(type);
-        if (Placeholders.replace(Messaging.stripColor(name), sender, npc).length() > nameLength) {
+        String stripped = Util.stripFormatting(Placeholders.replace(name, sender, npc));
+        if (stripped.length() > nameLength) {
             Messaging.sendErrorTr(sender, Messages.NPC_NAME_TOO_LONG, nameLength);
-            name = name.substring(0, nameLength);
+            if (!name.contains("<") && !name.contains("&") && !name.contains("§")) {
+                name = name.substring(0, nameLength);
+            }
         }
         if (name.length() == 0)
             throw new CommandException();
@@ -3000,9 +3003,12 @@ public class NPCCommands {
         String oldName = npc.getName();
         String newName = args.getJoinedStrings(1);
         int nameLength = SpigotUtil.getMaxNameLength(npc.getOrAddTrait(MobType.class).getType());
-        if (Placeholders.replace(Messaging.stripColor(newName), sender, npc).length() > nameLength) {
+        String stripped = Util.stripFormatting(Placeholders.replace(newName, sender, npc));
+        if (stripped.length() > nameLength) {
             Messaging.sendErrorTr(sender, Messages.NPC_NAME_TOO_LONG, nameLength);
-            newName = newName.substring(0, nameLength);
+            if (!newName.contains("<") && !newName.contains("&") && !newName.contains("§")) {
+                newName = newName.substring(0, nameLength);
+            }
         }
         npc.setName(newName);
 

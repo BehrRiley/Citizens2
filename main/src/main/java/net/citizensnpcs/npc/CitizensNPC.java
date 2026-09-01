@@ -436,6 +436,26 @@ public class CitizensNPC extends AbstractNPC {
         return true;
     }
 
+    public String getSpeechNPCName() {
+        String raw = getRawName();
+        if (raw != null && !raw.isEmpty()) {
+            return raw;
+        }
+        return getName();
+    }
+
+    private String formatSpeech(String template, String message, String target, String targets) {
+        String npcName = getSpeechNPCName();
+        String result = template.replace("<npc>", npcName).replace("<text>", message);
+        if (target != null) {
+            result = result.replace("<target>", target);
+        }
+        if (targets != null) {
+            result = result.replace("<targets>", targets);
+        }
+        return result;
+    }
+
     @Override
     public void speak(SpeechContext context) {
         NPCSpeechEvent event = new NPCSpeechEvent(this, context);
@@ -445,32 +465,30 @@ public class CitizensNPC extends AbstractNPC {
 
         // chat to the world with CHAT_FORMAT and CHAT_RANGE settings
         if (!context.hasRecipients()) {
-            String text = Setting.CHAT_FORMAT.asString().replace("<text>", context.getMessage());
+            String text = formatSpeech(Setting.CHAT_FORMAT.asString(), context.getMessage(), null, null);
             talkToBystanders(this, text, context);
             return;
         } else if (context.size() <= 1) { // Assumed recipients at this point
-            String text = Setting.CHAT_FORMAT_TO_TARGET.asString().replace("<text>", context.getMessage());
             String targetName = "";
-            // For each recipient
             for (Talkable talkable : context) {
-                talkable.talkTo(context, text);
                 targetName = talkable.getName();
+                String text = formatSpeech(Setting.CHAT_FORMAT_TO_TARGET.asString(), context.getMessage(), targetName, null);
+                talkable.talkTo(context, text);
             }
             // Check if bystanders hear targeted chat
             if (!Setting.CHAT_BYSTANDERS_HEAR_TARGETED_CHAT.asBoolean())
                 return;
             // Format message with config setting and send to bystanders
-            String bystanderText = Setting.CHAT_FORMAT_TO_BYSTANDERS.asString().replace("<target>", targetName)
-                    .replace("<text>", context.getMessage());
+            String bystanderText = formatSpeech(Setting.CHAT_FORMAT_TO_BYSTANDERS.asString(), context.getMessage(), targetName, null);
             talkToBystanders(this, bystanderText, context);
             return;
         } else { // Multiple recipients
-            String text = Setting.CHAT_FORMAT_TO_TARGET.asString().replace("<text>", context.getMessage());
             List<String> targetNames = new ArrayList<>();
             // Talk to each recipient
             for (Talkable talkable : context) {
-                talkable.talkTo(context, text);
                 targetNames.add(talkable.getName());
+                String text = formatSpeech(Setting.CHAT_FORMAT_TO_TARGET.asString(), context.getMessage(), talkable.getName(), null);
+                talkable.talkTo(context, text);
             }
             if (!Setting.CHAT_BYSTANDERS_HEAR_TARGETED_CHAT.asBoolean())
                 return;
@@ -506,8 +524,7 @@ public class CitizensNPC extends AbstractNPC {
                     targets = targets + format[3];
                 }
             }
-            String bystanderText = Setting.CHAT_FORMAT_WITH_TARGETS_TO_BYSTANDERS.asString()
-                    .replace("<targets>", targets).replace("<text>", context.getMessage());
+            String bystanderText = formatSpeech(Setting.CHAT_FORMAT_WITH_TARGETS_TO_BYSTANDERS.asString(), context.getMessage(), null, targets);
             talkToBystanders(this, bystanderText, context);
         }
     }
